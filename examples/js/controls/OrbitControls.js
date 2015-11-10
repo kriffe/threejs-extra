@@ -616,10 +616,9 @@
                         
                         //Include pan towards target if enabled
                         if (scope.enableZoomToMouse){
-                            var dir = (delta > 0 ? -1 : 1);
                             var deltaPanX = event.clientX - (scope.domElement.offsetLeft + scope.domElement.clientWidth/2);
                             var deltaPanY = event.clientY - (scope.domElement.offsetTop + scope.domElement.clientHeight/2);
-                            pan( dir*deltaPanX/10,dir*deltaPanY/10);
+                            pan( -deltaPanX/10,-deltaPanY/10);
                         }
                         
 
