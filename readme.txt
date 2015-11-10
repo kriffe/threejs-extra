@@ -1,1 +1,1 @@
-Selected extra from three.js project
+Selected extra from three.js project.
