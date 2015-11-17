@@ -6,6 +6,7 @@
  * @author alteredq / http://alteredqualia.com/
  * @author WestLangley / http://github.com/WestLangley
  * @author erich666 / http://erichaines.com
+ * @author kriffe https://github.com/kriffe
  */
 /*global THREE, console */
 
@@ -385,7 +386,7 @@
                 
 
 		// The four arrow keys
-		this.keys = { LEFT: 37, UP: 38, RIGHT: 39, BOTTOM: 40 };
+		this.keys = { LEFT: 37, UP: 38, RIGHT: 39, BOTTOM: 40, ESC: 27};
 
 		// Mouse buttons
 		THREE.MOUSE.WHEEL = 999;    //Disabled for mouse up/down/move
@@ -408,7 +409,7 @@
 		var dollyEnd = new THREE.Vector2();
 		var dollyDelta = new THREE.Vector2();
 
-		var STATE = { NONE : - 1, ROTATE : 0, DOLLY : 1, PAN : 2, TOUCH_ROTATE : 3, TOUCH_DOLLY : 4, TOUCH_PAN : 5 };
+		var STATE = { NONE : - 1, ROTATE : 0, DOLLY : 1, PAN : 2, TOUCH_ROTATE : 3, TOUCH_DOLLY : 4, TOUCH_PAN : 5 , SELECT: 6 };
 
 		var state = STATE.NONE;
 
@@ -420,9 +421,18 @@
 
 		// events
 
-		var changeEvent = { type: 'change' };
-		var startEvent = { type: 'start' };
-		var endEvent = { type: 'end' };
+		
+                var selectStartEvent = 'select-start';
+                var selectMoveEvent = 'select-move';
+                var selectEndEvent = 'select-end';
+                var moveEvent = 'canvas-move';
+                
+                var doubleClickEvent = 'select-double';
+                var changeEvent = 'change';
+                var abortEvent = 'abort';
+                
+                
+                
 
 		// pass in x,y of change desired in pixel space,
 		// right and down are positive
@@ -444,7 +454,7 @@
 
 			if ( constraint.update() === true ) {
 
-				this.dispatchEvent( changeEvent );
+				this.dispatchEvent( {type:changeEvent,content:''} );
 
 			}
 
@@ -459,7 +469,7 @@
 			this.object.zoom = this.zoom0;
 
 			this.object.updateProjectionMatrix();
-			this.dispatchEvent( changeEvent );
+			this.dispatchEvent( {type:changeEvent,content:''} );
 
 			this.update();
 
@@ -507,20 +517,24 @@
 
 				panStart.set( event.clientX, event.clientY );
 
-			}
+			} else if ( event.button === scope.mouseButtons.SELECT){
+                            
+                                state = STATE.SELECT;
+
+                                scope.dispatchEvent( {type:selectStartEvent,content:event} );
+                        }
 
 			if ( state !== STATE.NONE ) {
 
-				document.addEventListener( 'mousemove', onMouseMove, false );
+				//document.addEventListener( 'mousemove', onMouseMove, false );
 				document.addEventListener( 'mouseup', onMouseUp, false );
-				scope.dispatchEvent( startEvent );
+				//scope.dispatchEvent( {type:startEvent, content:event} );
 
 			}
 
 		}
 
 		function onMouseMove( event ) {
-
 			if ( scope.enabled === false ) return;
 
 			event.preventDefault();
@@ -572,19 +586,28 @@
 
 				panStart.copy( panEnd );
 
-			}
+			} else if ( state === STATE.SELECT){
+                                scope.dispatchEvent( {type:selectMoveEvent,content:event} );
+                        } else {
+                            scope.dispatchEvent({type:moveEvent,content:event});
+                        }
 
 			if ( state !== STATE.NONE ) scope.update();
-
+                        
+                        
 		}
 
-		function onMouseUp( /* event */ ) {
+		function onMouseUp(  event  ) {
 
 			if ( scope.enabled === false ) return;
 
-			document.removeEventListener( 'mousemove', onMouseMove, false );
+			//scope.domElement.removeEventListener( 'mousemove', onMouseMove, false );
 			document.removeEventListener( 'mouseup', onMouseUp, false );
-			scope.dispatchEvent( endEvent );
+                        
+                        if (state === STATE.SELECT){
+                            scope.dispatchEvent( {type:selectEndEvent,content:event} );
+                        }
+			
 			state = STATE.NONE;
 
 		}
@@ -624,7 +647,7 @@
                         
                         
                         //Include pan towards target if enabled
-                        if (scope.enableZoomToMouse){
+                        if (scope.enableZoomToMouse && delta > 0){
                             var deltaPanX = event.clientX - (scope.domElement.offsetLeft + scope.domElement.clientWidth/2);
                             var deltaPanY = event.clientY - (scope.domElement.offsetTop + scope.domElement.clientHeight/2);
                             pan( -deltaPanX/10,-deltaPanY/10);
@@ -632,8 +655,8 @@
                         
 
 			scope.update();
-			scope.dispatchEvent( startEvent );
-			scope.dispatchEvent( endEvent );
+			//scope.dispatchEvent( {type:startEvent,content:event} );
+			//scope.dispatchEvent( {type:endEvent,content:event} );
 
 		}
 
@@ -662,10 +685,17 @@
 					pan( - scope.keyPanSpeed, 0 );
 					scope.update();
 					break;
+                                case scope.keys.ESC:
+                                        scope.dispatchEvent({type:abortEvent,content:event});   
+                                        break;
 
 			}
 
 		}
+                
+                function onMouseDoubleclick( event ){
+                    scope.dispatchEvent( {type:doubleClickEvent,content:event });
+                }
 
 		function touchstart( event ) {
 
@@ -673,13 +703,14 @@
 
 			switch ( event.touches.length ) {
 
-				case 1:	// one-fingered touch: rotate
+				case 1:	// one-fingered touch: select
 
 					if ( scope.enableRotate === false ) return;
 
-					state = STATE.TOUCH_ROTATE;
-
-					rotateStart.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
+					state = STATE.SELECT;
+                                        
+                                        scope.dispatchEvent( {type:selectStartEvent,content:event} );
+					//rotateStart.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );    //FIX: Move to two finger touch
 					break;
 
 				case 2:	// two-fingered touch: dolly
@@ -709,7 +740,7 @@
 
 			}
 
-			if ( state !== STATE.NONE ) scope.dispatchEvent( startEvent );
+			//if ( state !== STATE.NONE ) scope.dispatchEvent( {type:startEvent,content:event} );
 
 		}
 
@@ -724,22 +755,22 @@
 
 			switch ( event.touches.length ) {
 
-				case 1: // one-fingered touch: rotate
+				case 1: // one-fingered touch: select move
 
-					if ( scope.enableRotate === false ) return;
-					if ( state !== STATE.TOUCH_ROTATE ) return;
-
-					rotateEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
-					rotateDelta.subVectors( rotateEnd, rotateStart );
-
-					// rotating across whole screen goes 360 degrees around
-					constraint.rotateLeft( 2 * Math.PI * rotateDelta.x / element.clientWidth * scope.rotateSpeed );
-					// rotating up and down along whole screen attempts to go 360, but limited to 180
-					constraint.rotateUp( 2 * Math.PI * rotateDelta.y / element.clientHeight * scope.rotateSpeed );
-
-					rotateStart.copy( rotateEnd );
-
-					scope.update();
+//					if ( scope.enableRotate === false ) return;
+//					if ( state !== STATE.TOUCH_ROTATE ) return;
+//
+//					rotateEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
+//					rotateDelta.subVectors( rotateEnd, rotateStart );
+//
+//					// rotating across whole screen goes 360 degrees around
+//					constraint.rotateLeft( 2 * Math.PI * rotateDelta.x / element.clientWidth * scope.rotateSpeed );
+//					// rotating up and down along whole screen attempts to go 360, but limited to 180
+//					constraint.rotateUp( 2 * Math.PI * rotateDelta.y / element.clientHeight * scope.rotateSpeed );
+//
+//					rotateStart.copy( rotateEnd );
+//
+//					scope.update();
 					break;
 
 				case 2: // two-fingered touch: dolly
@@ -792,11 +823,14 @@
 
 		}
 
-		function touchend( /* event */ ) {
+		function touchend(  event  ) {
 
 			if ( scope.enabled === false ) return;
 
-			scope.dispatchEvent( endEvent );
+                        if (state === STATE.SELECT){
+                            scope.dispatchEvent( {type:selectEndEvent,content:event} );
+                        }
+			
 			state = STATE.NONE;
 
 		}
@@ -818,7 +852,7 @@
 			this.domElement.removeEventListener( 'touchend', touchend, false );
 			this.domElement.removeEventListener( 'touchmove', touchmove, false );
 
-			document.removeEventListener( 'mousemove', onMouseMove, false );
+			//document.removeEventListener( 'mousemove', onMouseMove, false );
 			document.removeEventListener( 'mouseup', onMouseUp, false );
 
 			window.removeEventListener( 'keydown', onKeyDown, false );
@@ -828,6 +862,7 @@
 		this.domElement.addEventListener( 'contextmenu', contextmenu, false );
 
 		this.domElement.addEventListener( 'mousedown', onMouseDown, false );
+                this.domElement.addEventListener( 'mousemove', onMouseMove, false );
 		this.domElement.addEventListener( 'mousewheel', onMouseWheel, false );
 		this.domElement.addEventListener( 'MozMousePixelScroll', onMouseWheel, false ); // firefox
 
@@ -836,6 +871,8 @@
 		this.domElement.addEventListener( 'touchmove', touchmove, false );
 
 		window.addEventListener( 'keydown', onKeyDown, false );
+                
+                this.domElement.addEventListener ("dblclick", onMouseDoubleclick, false);
 
 		// force an update at start
 		this.update();
