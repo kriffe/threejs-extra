@@ -122,6 +122,7 @@
 				// get Y column of matrix. Zero out upward component if groundLock enabled
                                 if (scope.enableGroundLock){
                                     v.set( te[ 4 ]*(1-scope.object.up.x), te[ 5 ]*(1-scope.object.up.y), te[ 6 ]*(1-scope.object.up.z) );   
+                                    v.normalize();
                                 }
                                 else{
                                     v.set( te[ 4 ], te[ 5 ], te[ 6 ] );
