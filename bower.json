@@ -1,7 +1,7 @@
 {
   "name": "threejs-extras",
   "description": "JavaScript 3D library",
-  "main": ["examples/js/SelectionControls.js",
+  "main": ["examples/js/controls/SelectionControls.js",
 		"examples/js/utils/pnltri/pnltri.js",
 		"examples/js/utils/FontUtils.js",
 		"examples/fonts/helvetiker_regular.typeface.js"],
