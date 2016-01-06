@@ -1,0 +1,26 @@
+{
+  "name": "threejs-extras",
+  "description": "JavaScript 3D library",
+  "main": ["examples/js/SelectionControls.js",
+		"examples/js/utils/FontUtils.js",
+		"examples/fonts/helvetiker_regular.typeface.js"],
+  "authors": [
+    "mrdoob"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "three",
+    "three.js",
+    "3d",
+    "webgl"
+  ],
+  "homepage": "https://github.com/kriffe/threejs-extras",
+  "moduleType": [],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
