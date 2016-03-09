@@ -444,7 +444,19 @@
 			constraint.pan( deltaX, deltaY, element.clientWidth, element.clientHeight );
 
 		}
-
+		
+		this.manualPan = function(deltaX,deltaY){
+			return pan(deltaX,deltaY);
+		}
+		
+		this.manualDolly = function(amount){
+			
+			if(amount > 0)
+				return constraint.dollyIn(amount);
+			else
+				return constraint.dollyOut(Math.abs(amount));
+		}
+		
 		this.update = function () {
 
 			if ( this.autoRotate && state === STATE.NONE ) {
@@ -879,6 +891,8 @@
 
 		// force an update at start
 		this.update();
+		
+		
 
 	};
 
