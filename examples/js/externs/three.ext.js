@@ -2437,7 +2437,10 @@ THREE.Shape = {};
 THREE.Shape.Utils = {};
 THREE.Shape.Utils.triangulateShape ={};
 THREE.Shape.Utils.isClockWise ={};
-
+THREE.ShapeUtils = {};
+THREE.ShapeUtils.triangulateShape ={};
+THREE.ShapeUtils.isClockWise ={};
+	
 THREE.WebGLRenderer.setClearColor = {};
 THREE.WebGLRenderer.setSize = {};
 THREE.WebGLRenderer.shadowMapEnable = {};
