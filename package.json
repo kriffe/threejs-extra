@@ -1,7 +1,7 @@
 {
   "name": "threejs-extras",
   "version": "1.1.0-RELEASE.1",
-  "description": "JavaScript 3D library",
+  "description": "Extra content to threejs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
